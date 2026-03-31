@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 // --- DATABASE SETUP ---
 // Connect to the DB using DATABASE_URL (usually provided by Railway)
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:lPzpIuGitsIbLVQteiNpvlJuMsHJpveR@postgres.railway.internal:5432/railway',
+    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:yvTrdgBQgxxHuflNcAziuHHRljeXrtvW@postgres.railway.internal:5432/railway',
     ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
