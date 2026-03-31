@@ -112,6 +112,14 @@ if (newsOverlay) {
     newsOverlay.addEventListener('touchstart', (e) => e.stopPropagation());
 }
 
+if (socket) {
+    socket.on('newsUpdate', (newsText) => {
+        if (newsContent) {
+            newsContent.textContent = newsText;
+        }
+    });
+}
+
 // Show news popup on load
 if (newsOverlay) {
     newsOverlay.classList.remove('hidden');
@@ -189,13 +197,6 @@ function initGame() {
     // Listen for real-time Leaderboard updates
     socket.on('leaderboardUpdate', (players) => {
         updateLeaderboardUI(players);
-    });
-
-    // Listen for Database News Updates
-    socket.on('newsUpdate', (newsText) => {
-        if (newsContent) {
-            newsContent.textContent = newsText;
-        }
     });
 }
 
