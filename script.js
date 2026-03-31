@@ -15,6 +15,9 @@ const characters = [
     { closed: 'chara/erick1.webp', open: 'chara/erick2.webp' },
     { closed: 'chara/yaqut1.webp', open: 'chara/yaqut2.webp' },
     { closed: 'chara/luhut1.webp', open: 'chara/luhut2.webp' },
+    { closed: 'chara/fafafa1.webp', open: 'chara/fafafa2.webp' },
+    { closed: 'chara/meutya1.webp', open: 'chara/meutya2.webp' },
+    { closed: 'chara/zon1.webp', open: 'chara/zon2.webp' },
 ];
 
 // Preload all images
