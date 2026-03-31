@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 // --- DATABASE SETUP ---
 // Connect to the DB using DATABASE_URL (usually provided by Railway)
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:MKgRApBNdedrNFodHUpmnWAmAzXPJdwT@postgres.railway.internal:5432/railway',
+    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:lPzpIuGitsIbLVQteiNpvlJuMsHJpveR@postgres.railway.internal:5432/railway',
     ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
@@ -31,7 +31,7 @@ async function initDB() {
                 score BIGINT DEFAULT 0
             )
         `);
-        
+
         try {
             await pool.query(`ALTER TABLE players ADD COLUMN IF NOT EXISTS id VARCHAR(100)`);
             await pool.query(`UPDATE players SET id = username WHERE id IS NULL`);
@@ -80,7 +80,7 @@ io.on('connection', async (socket) => {
     socket.on('initUser', async (data) => {
         let username;
         let id;
-        
+
         if (typeof data === 'string') {
             username = data;
             id = data;
