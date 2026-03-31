@@ -38,8 +38,19 @@ async function initDB() {
             await pool.query(`ALTER TABLE players DROP CONSTRAINT IF EXISTS players_pkey CASCADE`);
             await pool.query(`ALTER TABLE players ADD CONSTRAINT players_id_unique UNIQUE (id)`);
             await pool.query(`ALTER TABLE players ALTER COLUMN score TYPE BIGINT`);
+
+            // Add settings table for info/news
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS settings (
+                    key VARCHAR(50) PRIMARY KEY,
+                    value TEXT
+                )
+            `);
+            await pool.query(`
+                INSERT INTO settings (key, value) VALUES ('news', 'Selamat datang di Pop Balil 3!') ON CONFLICT (key) DO NOTHING
+            `);
         } catch (migrationErr) {
-            console.log('Migration step skipped or already applied.');
+            console.log('Migration step skipped or already applied.', migrationErr);
         }
 
         console.log('Database table "players" is ready.');
@@ -75,6 +86,16 @@ io.on('connection', async (socket) => {
     // Send initial leaderboard
     const allPlayers = await getAllPlayers();
     socket.emit('leaderboardUpdate', allPlayers);
+
+    // Fetch and send news
+    try {
+        const newsRes = await pool.query("SELECT value FROM settings WHERE key = 'news'");
+        if (newsRes.rows.length > 0) {
+            socket.emit('newsUpdate', newsRes.rows[0].value);
+        }
+    } catch (err) {
+        console.error('Error fetching news:', err);
+    }
 
     // Handle user login/init
     socket.on('initUser', async (data) => {

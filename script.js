@@ -95,6 +95,30 @@ closeQrisBtn.addEventListener('click', (e) => {
 qrisOverlay.addEventListener('mousedown', (e) => e.stopPropagation());
 qrisOverlay.addEventListener('touchstart', (e) => e.stopPropagation());
 
+// --- NEWS POPUP ---
+const newsOverlay = document.getElementById('news-overlay');
+const closeNewsBtn = document.getElementById('close-news-btn');
+const newsContent = document.getElementById('news-content');
+
+if (closeNewsBtn) {
+    closeNewsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        newsOverlay.classList.add('hidden');
+    });
+}
+
+if (newsOverlay) {
+    newsOverlay.addEventListener('mousedown', (e) => e.stopPropagation());
+    newsOverlay.addEventListener('touchstart', (e) => e.stopPropagation());
+}
+
+// Show news popup after 1 minute
+setTimeout(() => {
+    if (newsOverlay) {
+        newsOverlay.classList.remove('hidden');
+    }
+}, 60000);
+
 // --- LEADERBOARD TOGGLE ---
 leaderboardContainer.addEventListener('mousedown', (e) => e.stopPropagation());
 leaderboardContainer.addEventListener('touchstart', (e) => e.stopPropagation());
@@ -167,6 +191,13 @@ function initGame() {
     // Listen for real-time Leaderboard updates
     socket.on('leaderboardUpdate', (players) => {
         updateLeaderboardUI(players);
+    });
+
+    // Listen for Database News Updates
+    socket.on('newsUpdate', (newsText) => {
+        if (newsContent) {
+            newsContent.textContent = newsText;
+        }
     });
 }
 
