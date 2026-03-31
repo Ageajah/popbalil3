@@ -27,10 +27,21 @@ async function initDB() {
     try {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS players (
-                username VARCHAR(50) PRIMARY KEY,
-                score INTEGER DEFAULT 0
+                username VARCHAR(50),
+                score BIGINT DEFAULT 0
             )
         `);
+        
+        try {
+            await pool.query(`ALTER TABLE players ADD COLUMN IF NOT EXISTS id VARCHAR(100)`);
+            await pool.query(`UPDATE players SET id = username WHERE id IS NULL`);
+            await pool.query(`ALTER TABLE players DROP CONSTRAINT IF EXISTS players_pkey CASCADE`);
+            await pool.query(`ALTER TABLE players ADD CONSTRAINT players_id_unique UNIQUE (id)`);
+            await pool.query(`ALTER TABLE players ALTER COLUMN score TYPE BIGINT`);
+        } catch (migrationErr) {
+            console.log('Migration step skipped or already applied.');
+        }
+
         console.log('Database table "players" is ready.');
     } catch (err) {
         console.error('Error initializing database at startup:', err);
@@ -44,7 +55,7 @@ async function getAllPlayers() {
         const res = await pool.query('SELECT username, score FROM players ORDER BY score DESC');
         const playersObj = {};
         res.rows.forEach(row => {
-            playersObj[row.username] = { score: row.score };
+            playersObj[row.username] = { score: parseInt(row.score, 10) };
         });
         return playersObj;
     } catch (err) {
@@ -66,19 +77,37 @@ io.on('connection', async (socket) => {
     socket.emit('leaderboardUpdate', allPlayers);
 
     // Handle user login/init
-    socket.on('initUser', async (username) => {
+    socket.on('initUser', async (data) => {
+        let username;
+        let id;
+        
+        if (typeof data === 'string') {
+            username = data;
+            id = data;
+        } else {
+            username = data.username;
+            id = data.id;
+        }
+
+        socket.userId = id;
         socket.username = username;
+
         try {
             // Check if user exists
-            const res = await pool.query('SELECT score FROM players WHERE username = $1', [username]);
+            const res = await pool.query('SELECT username, score FROM players WHERE id = $1', [id]);
 
             let score = 0;
             if (res.rows.length > 0) {
                 // User exists
-                score = res.rows[0].score;
+                score = parseInt(res.rows[0].score, 10);
+                if (res.rows[0].username && res.rows[0].username !== username) {
+                    username = res.rows[0].username;
+                    socket.username = username;
+                    socket.emit('usernameUpdated', username);
+                }
             } else {
                 // New user
-                await pool.query('INSERT INTO players (username, score) VALUES ($1, $2)', [username, 0]);
+                await pool.query('INSERT INTO players (id, username, score) VALUES ($1, $2, $3)', [id, username, 0]);
             }
 
             // Send initial score to the newly connected user
@@ -93,22 +122,22 @@ io.on('connection', async (socket) => {
     });
 
     // Handle pop event
-    socket.on('pop', async (username) => {
-        if (!username) return;
+    socket.on('pop', async (id) => {
+        if (!id) return;
 
         try {
             // Increment logic atomically to prevent race conditions
             const updateRes = await pool.query(
-                'UPDATE players SET score = score + 1 WHERE username = $1 RETURNING score',
-                [username]
+                'UPDATE players SET score = score + 1 WHERE id = $1 RETURNING score',
+                [id]
             );
 
             let newScore = 1;
             if (updateRes.rows.length > 0) {
-                newScore = updateRes.rows[0].score;
+                newScore = parseInt(updateRes.rows[0].score, 10);
             } else {
                 // Failsafe: if somehow user popped before initialization
-                await pool.query('INSERT INTO players (username, score) VALUES ($1, $2)', [username, 1]);
+                await pool.query('INSERT INTO players (id, username, score) VALUES ($1, $2, $3)', [id, socket.username || id, 1]);
             }
 
             // Immediately send back updated score to the user clicking

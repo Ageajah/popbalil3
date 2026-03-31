@@ -109,6 +109,11 @@ popSound.preload = 'auto';
 // --- STATE ---
 let count = 0;
 let username = localStorage.getItem('popUsername') || '';
+let userId = localStorage.getItem('popUserId') || '';
+if (!userId) {
+    userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('popUserId', userId);
+}
 
 // --- INITIALIZATION ---
 if (username) {
@@ -122,8 +127,8 @@ startBtn.addEventListener('click', () => {
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
 
     if (val) {
-        if (val.length > 10) {
-            alert('ユーザー名は最大10文字です!');
+        if (val.length > 15) {
+            alert('ユーザー名は最大15文字です!');
             return;
         }
         if (!alphanumericRegex.test(val)) {
@@ -142,7 +147,16 @@ function initGame() {
     if (!socket) return;
 
     // Tell the server who we are
-    socket.emit('initUser', username);
+    socket.emit('initUser', { id: userId, username: username });
+
+    // Handle username update from server
+    socket.on('usernameUpdated', (newUsername) => {
+        if (newUsername && newUsername !== username) {
+            username = newUsername;
+            localStorage.setItem('popUsername', username);
+            if (displayUsername) displayUsername.textContent = username;
+        }
+    });
 
     // Get initial score
     socket.on('userScore', (score) => {
@@ -164,10 +178,10 @@ function updateLeaderboardUI(players) {
         .map(key => ({ name: key, score: players[key].score }))
         .sort((a, b) => b.score - a.score);
 
-    // Display Top 10
-    const top10 = allPlayers.slice(0, 10);
+    // Display Top 100
+    const top100 = allPlayers.slice(0, 100);
     leaderboardList.innerHTML = '';
-    top10.forEach((p, index) => {
+    top100.forEach((p, index) => {
         const item = document.createElement('div');
         const isMe = p.name === username;
         item.className = `leaderboard-item ${isMe ? 'is-me' : ''}`;
@@ -208,7 +222,7 @@ const pop = (event) => {
 
     // Update Server
     if (username && socket) {
-        socket.emit('pop', username);
+        socket.emit('pop', userId);
     }
 
     // Visuals
