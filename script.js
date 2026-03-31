@@ -112,12 +112,10 @@ if (newsOverlay) {
     newsOverlay.addEventListener('touchstart', (e) => e.stopPropagation());
 }
 
-// Show news popup after 1 minute
-setTimeout(() => {
-    if (newsOverlay) {
-        newsOverlay.classList.remove('hidden');
-    }
-}, 60000);
+// Show news popup on load
+if (newsOverlay) {
+    newsOverlay.classList.remove('hidden');
+}
 
 // --- LEADERBOARD TOGGLE ---
 leaderboardContainer.addEventListener('mousedown', (e) => e.stopPropagation());

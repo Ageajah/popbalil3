@@ -306,8 +306,8 @@ html {
     position: relative;
     flex-grow: 1;
     display: flex;
-    align-items: flex-end;
-    /* Align to bottom for a more grounded look */
+    align-items: center;
+    /* Align to center so short characters are centered */
     justify-content: center;
     width: 100%;
     cursor: pointer;
